@@ -2,13 +2,17 @@
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using System.Security.Claims;
+using GenericRepository;
 using Microsoft.AspNetCore.Http;
 using RentACarServer.Domain.Abstractions;
+using RentACarServer.Domain.Users;
 
 namespace RentACarServer.Infrastructure.Context;
 
-internal sealed class ApplicationDbContext(DbContextOptions options) : DbContext(options)
+internal sealed class ApplicationDbContext(DbContextOptions options) : DbContext(options), IUnitOfWork
 {
+
+    public DbSet<User> Users { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
