@@ -1,18 +1,19 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using System.Security.Claims;
-using GenericRepository;
+﻿using GenericRepository;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RentACarServer.Domain.Abstractions;
+using RentACarServer.Domain.LoginTokens;
 using RentACarServer.Domain.Users;
+using System.Security.Claims;
 
 namespace RentACarServer.Infrastructure.Context;
 
-internal sealed class ApplicationDbContext(DbContextOptions options) : DbContext(options), IUnitOfWork
+public sealed class ApplicationDbContext(DbContextOptions options) : DbContext(options), IUnitOfWork
 {
 
     public DbSet<User> Users { get; set; }
+    public DbSet<LoginToken> LoginTokens { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
@@ -33,13 +34,18 @@ internal sealed class ApplicationDbContext(DbContextOptions options) : DbContext
         var entries = ChangeTracker.Entries<Entity>();
 
         HttpContextAccessor httpContextAccessor = new();
-        string userIdString =
+        string? userIdString =
             httpContextAccessor
             .HttpContext!
             .User
             .Claims
-            .First(p => p.Type == ClaimTypes.NameIdentifier)
+            .FirstOrDefault(p => p.Type == ClaimTypes.NameIdentifier)?
             .Value;
+
+        if (userIdString is null)
+        {
+            return base.SaveChangesAsync(cancellationToken);
+        }
 
         Guid userId = Guid.Parse(userIdString);
         IdentityId identityId = new(userId);

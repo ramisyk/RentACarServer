@@ -1,6 +1,7 @@
 ﻿using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using RentACarServer.Application.Behaviors;
+using RentACarServer.WebAPI.Middlewares;
 using TS.Result;
 
 namespace RentACarServer.WebAPI;
@@ -21,15 +22,13 @@ public sealed class ExceptionHandler : IExceptionHandler
         var exceptionType = actualException.GetType();
         var validationExceptionType = typeof(ValidationException);
         var authorizationExceptionType = typeof(AuthorizationException);
+        var tokenException = typeof(TokenException);
 
         if (exceptionType == validationExceptionType)
         {
             httpContext.Response.StatusCode = 422;
-
             errorResult = Result<string>.Failure(422, ((ValidationException)exception).Errors.Select(s => s.PropertyName).ToList());
-
             await httpContext.Response.WriteAsJsonAsync(errorResult);
-
             return true;
         }
 
@@ -37,6 +36,14 @@ public sealed class ExceptionHandler : IExceptionHandler
         {
             httpContext.Response.StatusCode = 403;
             errorResult = Result<string>.Failure(403, "Bu işlem için yetkiniz yok");
+            await httpContext.Response.WriteAsJsonAsync(errorResult);
+            return true;
+        }
+
+        if (exceptionType == tokenException)
+        {
+            httpContext.Response.StatusCode = 401;
+            errorResult = Result<string>.Failure(401, "Token geçeriz");
             await httpContext.Response.WriteAsJsonAsync(errorResult);
             return true;
         }

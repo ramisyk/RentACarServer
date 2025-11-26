@@ -1,11 +1,13 @@
-using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.OData;
 using Microsoft.AspNetCore.RateLimiting;
 using RentACarServer.Application;
+using RentACarServer.Application.Services;
 using RentACarServer.Infrastructure;
 using RentACarServer.WebAPI;
+using RentACarServer.WebAPI.Middlewares;
 using RentACarServer.WebAPI.Modules;
 using Scalar.AspNetCore;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +30,24 @@ builder.Services.AddRateLimiter(cfr =>
         opt.Window = TimeSpan.FromMinutes(1);
         opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
     });
+    cfr.AddFixedWindowLimiter("forgot-password-fixed", opt =>
+    {
+        opt.PermitLimit = 2;
+        opt.Window = TimeSpan.FromMinutes(5);
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+    });
+    cfr.AddFixedWindowLimiter("reset-password-fixed", opt =>
+    {
+        opt.PermitLimit = 3;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+    });
+    cfr.AddFixedWindowLimiter("check-forgot-password-code-fixed", opt =>
+    {
+        opt.PermitLimit = 2;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+    });
 });
 
 builder.Services.AddControllers()
@@ -44,6 +64,8 @@ builder.Services.AddResponseCompression(opt =>
     opt.EnableForHttps = true;
 });
 
+builder.Services.AddTransient<CheckTokenMiddleware>();
+
 var app = builder.Build();
 app.MapOpenApi();
 app.MapScalarApiReference();
@@ -59,8 +81,11 @@ app.UseResponseCompression();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseRateLimiter();
 app.UseExceptionHandler();
+
+app.UseMiddleware<CheckTokenMiddleware>();
+
+app.UseRateLimiter();
 
 app.MapControllers()
     .RequireRateLimiting("fixed")
@@ -68,7 +93,8 @@ app.MapControllers()
 
 app.MapAuth();
 
-app.MapGet("/", () => "hello world").RequireAuthorization();
+
+app.MapGet("/", () => Results.Ok("Hello World")).RequireAuthorization();
 
 //await app.CreateFirstUser();
 app.Run();

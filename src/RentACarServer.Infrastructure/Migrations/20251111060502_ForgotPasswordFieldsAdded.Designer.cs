@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RentACarServer.Infrastructure.Context;
 
@@ -11,9 +12,11 @@ using RentACarServer.Infrastructure.Context;
 namespace RentACarServer.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251111060502_ForgotPasswordFieldsAdded")]
+    partial class ForgotPasswordFieldsAdded
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,19 +24,6 @@ namespace RentACarServer.Infrastructure.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("RentACarServer.Domain.LoginTokens.LoginToken", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("LoginTokens");
-                });
 
             modelBuilder.Entity("RentACarServer.Domain.Users.User", b =>
                 {
@@ -69,76 +59,15 @@ namespace RentACarServer.Infrastructure.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("RentACarServer.Domain.LoginTokens.LoginToken", b =>
-                {
-                    b.OwnsOne("RentACarServer.Domain.LoginTokens.ValueObjects.ExpiresDate", "ExpiresDate", b1 =>
-                        {
-                            b1.Property<Guid>("LoginTokenId")
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<DateTimeOffset>("Value")
-                                .HasColumnType("datetimeoffset");
-
-                            b1.HasKey("LoginTokenId");
-
-                            b1.ToTable("LoginTokens");
-
-                            b1.WithOwner()
-                                .HasForeignKey("LoginTokenId");
-                        });
-
-                    b.OwnsOne("RentACarServer.Domain.LoginTokens.ValueObjects.IsActive", "IsActive", b1 =>
-                        {
-                            b1.Property<Guid>("LoginTokenId")
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<bool>("Value")
-                                .HasColumnType("bit");
-
-                            b1.HasKey("LoginTokenId");
-
-                            b1.ToTable("LoginTokens");
-
-                            b1.WithOwner()
-                                .HasForeignKey("LoginTokenId");
-                        });
-
-                    b.OwnsOne("RentACarServer.Domain.LoginTokens.ValueObjects.Token", "Token", b1 =>
-                        {
-                            b1.Property<Guid>("LoginTokenId")
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<string>("Value")
-                                .IsRequired()
-                                .HasColumnType("varchar(MAX)");
-
-                            b1.HasKey("LoginTokenId");
-
-                            b1.ToTable("LoginTokens");
-
-                            b1.WithOwner()
-                                .HasForeignKey("LoginTokenId");
-                        });
-
-                    b.Navigation("ExpiresDate")
-                        .IsRequired();
-
-                    b.Navigation("IsActive")
-                        .IsRequired();
-
-                    b.Navigation("Token")
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("RentACarServer.Domain.Users.User", b =>
                 {
-                    b.OwnsOne("RentACarServer.Domain.Users.ForgotPasswordCode", "ForgotPasswordCode", b1 =>
+                    b.OwnsOne("RentACarServer.Domain.Users.ForgotPasswordDate", "ForgotPasswordDate", b1 =>
                         {
                             b1.Property<Guid>("UserId")
                                 .HasColumnType("uniqueidentifier");
 
-                            b1.Property<Guid>("Value")
-                                .HasColumnType("uniqueidentifier");
+                            b1.Property<DateTimeOffset>("Value")
+                                .HasColumnType("datetimeoffset");
 
                             b1.HasKey("UserId");
 
@@ -148,13 +77,13 @@ namespace RentACarServer.Infrastructure.Migrations
                                 .HasForeignKey("UserId");
                         });
 
-                    b.OwnsOne("RentACarServer.Domain.Users.ForgotPasswordDate", "ForgotPasswordDate", b1 =>
+                    b.OwnsOne("RentACarServer.Domain.Users.ForgotPasswordId", "ForgotPasswordId", b1 =>
                         {
                             b1.Property<Guid>("UserId")
                                 .HasColumnType("uniqueidentifier");
 
-                            b1.Property<DateTimeOffset>("Value")
-                                .HasColumnType("datetimeoffset");
+                            b1.Property<Guid>("Value")
+                                .HasColumnType("uniqueidentifier");
 
                             b1.HasKey("UserId");
 
@@ -292,15 +221,14 @@ namespace RentACarServer.Infrastructure.Migrations
                     b.Navigation("FirstName")
                         .IsRequired();
 
-                    b.Navigation("ForgotPasswordCode");
-
                     b.Navigation("ForgotPasswordDate");
+
+                    b.Navigation("ForgotPasswordId");
 
                     b.Navigation("FullName")
                         .IsRequired();
 
-                    b.Navigation("IsForgotPasswordCompleted")
-                        .IsRequired();
+                    b.Navigation("IsForgotPasswordCompleted");
 
                     b.Navigation("LastName")
                         .IsRequired();

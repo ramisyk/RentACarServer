@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RentACarServer.Infrastructure.Context;
 
@@ -11,9 +12,11 @@ using RentACarServer.Infrastructure.Context;
 namespace RentACarServer.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251125143254_LoginTokenTableCreated")]
+    partial class LoginTokenTableCreated
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -25,9 +28,6 @@ namespace RentACarServer.Infrastructure.Migrations
             modelBuilder.Entity("RentACarServer.Domain.LoginTokens.LoginToken", b =>
                 {
                     b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
@@ -71,6 +71,22 @@ namespace RentACarServer.Infrastructure.Migrations
 
             modelBuilder.Entity("RentACarServer.Domain.LoginTokens.LoginToken", b =>
                 {
+                    b.OwnsOne("RentACarServer.Domain.Abstractions.IdentityId", "UserId", b1 =>
+                        {
+                            b1.Property<Guid>("LoginTokenId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<Guid>("Value")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.HasKey("LoginTokenId");
+
+                            b1.ToTable("LoginTokens");
+
+                            b1.WithOwner()
+                                .HasForeignKey("LoginTokenId");
+                        });
+
                     b.OwnsOne("RentACarServer.Domain.LoginTokens.ValueObjects.ExpiresDate", "ExpiresDate", b1 =>
                         {
                             b1.Property<Guid>("LoginTokenId")
@@ -127,6 +143,9 @@ namespace RentACarServer.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Token")
+                        .IsRequired();
+
+                    b.Navigation("UserId")
                         .IsRequired();
                 });
 
