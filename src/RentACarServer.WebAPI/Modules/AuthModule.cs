@@ -10,13 +10,22 @@ public static class AuthModule
     {
         var app = builder.MapGroup("/auth");
 
-        app.MapPost("/login", 
+        app.MapPost("/login",
                 async (LoginCommand request, ISender sender, CancellationToken cancellationToken) =>
                 {
                     var res = await sender.Send(request, cancellationToken);
                     return res.IsSuccessful ? Results.Ok(res) : Results.InternalServerError(res);
                 })
-            .Produces<Result<string>>()
+            .Produces<Result<LoginCommandResponse>>()
+            .RequireRateLimiting("login-fixed");
+
+        app.MapPost("/login-with-tfa",
+                async (LoginWithTFACommand request, ISender sender, CancellationToken cancellationToken) =>
+                {
+                    var res = await sender.Send(request, cancellationToken);
+                    return res.IsSuccessful ? Results.Ok(res) : Results.InternalServerError(res);
+                })
+            .Produces<Result<LoginCommandResponse>>()
             .RequireRateLimiting("login-fixed");
 
         app.MapPost("/forgot-password/{email}",

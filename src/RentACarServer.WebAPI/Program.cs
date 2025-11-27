@@ -25,8 +25,7 @@ builder.Services.AddRateLimiter(cfr =>
     });
     cfr.AddFixedWindowLimiter("login-fixed", opt =>
     {
-        opt.PermitLimit = 3;
-        opt.QueueLimit = 2;
+        opt.PermitLimit = 5;
         opt.Window = TimeSpan.FromMinutes(1);
         opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
     });
@@ -65,6 +64,7 @@ builder.Services.AddResponseCompression(opt =>
 });
 
 builder.Services.AddTransient<CheckTokenMiddleware>();
+builder.Services.AddHostedService<CheckLoginTokenBackgroundService>();
 
 var app = builder.Build();
 app.MapOpenApi();

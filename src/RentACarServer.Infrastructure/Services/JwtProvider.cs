@@ -47,6 +47,8 @@ internal sealed class JwtProvider(
         LoginToken loginToken = new(newToken, user.Id, expiresDate);
         await loginTokenRepository.AddAsync(loginToken, cancellationToken);
 
+
+        // this codes deactivate all previous tokens, if you want to allow multiple tokens (devices, browsers, etc.), remove this part
         var loginTokens = await loginTokenRepository
             .Where(p => p.UserId == user.Id && p.IsActive.Value == true)
             .ToListAsync(cancellationToken);

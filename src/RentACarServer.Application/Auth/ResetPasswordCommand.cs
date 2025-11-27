@@ -1,6 +1,7 @@
 ﻿using FluentValidation;
 using GenericRepository;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using RentACarServer.Domain.LoginTokens;
 using RentACarServer.Domain.Users;
 using RentACarServer.Domain.Users.ValueObjects;
@@ -29,42 +30,58 @@ internal sealed class ResetPasswordCommandHandler(
 {
     public async Task<Result<string>> Handle(ResetPasswordCommand request, CancellationToken cancellationToken)
     {
-        var user = await userRepository.FirstOrDefaultAsync(p =>
-                p.ForgotPasswordCode != null
-                && p.ForgotPasswordCode.Value == request.ForgotPasswordCode
-                && p.IsForgotPasswordCompleted.Value == false
-            , cancellationToken);
-
-        if (user is null)
+        // Transaction başlat
+        var context = (DbContext)unitOfWork;
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        
+        try
         {
-            return Result<string>.Failure("Şifre sıfırlama değeriniz geçersiz");
-        }
+            var user = await userRepository.FirstOrDefaultAsync(p =>
+                    p.ForgotPasswordCode != null
+                    && p.ForgotPasswordCode.Value == request.ForgotPasswordCode
+                    && p.IsForgotPasswordCompleted.Value == false
+                , cancellationToken);
 
-        var fpDate = user.ForgotPasswordDate!.Value.AddDays(1);
-        var now = DateTimeOffset.Now;
-        if (fpDate < now)
-        {
-            return Result<string>.Failure("Şifre sıfırlama değeriniz geçersiz");
-        }
-
-        Password password = new(request.NewPassword);
-        user.SetPassword(password);
-        userRepository.Update(user);
-
-        if (request.LogoutAllDevices)
-        {
-            var loginTokens = await loginTokenRepository
-                .Where(p => p.UserId == user.Id & p.IsActive.Value == true)
-                .ToListAsync(cancellationToken);
-            foreach (var item in loginTokens)
+            if (user is null)
             {
-                item.SetIsActive(new(false));
+                return Result<string>.Failure("Şifre sıfırlama değeriniz geçersiz");
             }
-            loginTokenRepository.UpdateRange(loginTokens);
+
+            var fpDate = user.ForgotPasswordDate!.Value.AddDays(1);
+            var now = DateTimeOffset.Now;
+            if (fpDate < now)
+            {
+                return Result<string>.Failure("Şifre sıfırlama değeriniz geçersiz");
+            }
+
+            Password password = new(request.NewPassword);
+            user.SetPassword(password);
+            userRepository.Update(user);
+
+            if (request.LogoutAllDevices)
+            {
+                var loginTokens = await loginTokenRepository
+                    .Where(p => p.UserId == user.Id & p.IsActive.Value == true)
+                    .ToListAsync(cancellationToken);
+                foreach (var item in loginTokens)
+                {
+                    item.SetIsActive(new(false));
+                }
+                loginTokenRepository.UpdateRange(loginTokens);
+            }
+
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+            
+            // ✅ COMMIT: Tüm işlemler başarılı, değişiklikler veritabanına yazıldı
+            await transaction.CommitAsync(cancellationToken);
+
+            return "Şife başarıyla sıfırlandı. Yeni şifrenizle giriş yapabilirsiniz";
         }
-
-        await unitOfWork.SaveChangesAsync(cancellationToken);
-
-        return "Şife başarıyla sıfırlandı. Yeni şifrenizle giriş yapabilirsiniz";
+        catch (Exception)
+        {
+            // ❌ ROLLBACK: Hata oldu, tüm değişiklikler geri alındı
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
 }

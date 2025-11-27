@@ -36,7 +36,7 @@ public sealed class ApplicationDbContext(DbContextOptions options) : DbContext(o
         HttpContextAccessor httpContextAccessor = new();
         string? userIdString =
             httpContextAccessor
-            .HttpContext!
+            .HttpContext?
             .User
             .Claims
             .FirstOrDefault(p => p.Type == ClaimTypes.NameIdentifier)?
