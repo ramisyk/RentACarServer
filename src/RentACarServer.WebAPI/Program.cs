@@ -8,6 +8,7 @@ using RentACarServer.WebAPI.Middlewares;
 using RentACarServer.WebAPI.Modules;
 using Scalar.AspNetCore;
 using System.Threading.RateLimiting;
+using RentACarServer.WebAPI.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,11 +53,12 @@ builder.Services.AddRateLimiter(cfr =>
 builder.Services.AddControllers()
     .AddOData(opt =>
     {
-        opt.Select().Filter().Count().Expand().OrderBy().SetMaxTop(null);
+        opt.Select().Filter().Count().Expand().OrderBy().SetMaxTop(null)
+            .AddRouteComponents("odata", MainODataController.GetEdmModel());
     });
 
 builder.Services.AddCors();
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi("v1", options => { options.AddDocumentTransformer<BearerSecuritySchemeTransformer>(); }); 
 builder.Services.AddExceptionHandler<ExceptionHandler>().AddProblemDetails();
 builder.Services.AddResponseCompression(opt =>
 {
@@ -92,7 +94,7 @@ app.MapControllers()
     .RequireAuthorization();
 
 app.MapAuth();
-
+app.MapBranch();
 
 app.MapGet("/", () => Results.Ok("Hello World")).RequireAuthorization();
 

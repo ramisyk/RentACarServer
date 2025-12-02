@@ -1,4 +1,8 @@
-﻿namespace RentACarServer.Domain.Abstractions;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+using RentACarServer.Domain.Users;
+
+namespace RentACarServer.Domain.Abstractions;
 
 public abstract class Entity
 {
@@ -6,7 +10,6 @@ public abstract class Entity
     {
         Id = new IdentityId(Guid.CreateVersion7());
         IsActive = true;
-        IsDeleted = false;
     }
 
     public IdentityId Id { get; private set; }
@@ -14,10 +17,10 @@ public abstract class Entity
     public DateTimeOffset CreatedAt { get; private set; }
     public IdentityId CreatedBy { get; private set; } = default!;
     public DateTimeOffset? UpdatedAt { get; private set; }
-    public IdentityId? UpdatedBy { get; private set; } = default!;
+    public IdentityId? UpdatedBy { get; private set; }
     public bool IsDeleted { get; private set; }
     public DateTimeOffset? DeletedAt { get; private set; }
-    public IdentityId? DeletedBy { get; private set; } = default!;
+    public IdentityId? DeletedBy { get; private set; }
 
     public void SetStatus(bool isActive)
     {
@@ -28,7 +31,6 @@ public abstract class Entity
     {
         IsDeleted = true;
     }
-
 }
 
 public sealed record IdentityId(Guid Value)

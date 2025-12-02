@@ -6,6 +6,7 @@ using RentACarServer.Domain.Abstractions;
 using RentACarServer.Domain.LoginTokens;
 using RentACarServer.Domain.Users;
 using System.Security.Claims;
+using RentACarServer.Domain.Branches;
 
 namespace RentACarServer.Infrastructure.Context;
 
@@ -14,6 +15,7 @@ public sealed class ApplicationDbContext(DbContextOptions options) : DbContext(o
 
     public DbSet<User> Users { get; set; }
     public DbSet<LoginToken> LoginTokens { get; set; }
+    public DbSet<Branch> Branches { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
